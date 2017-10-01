@@ -40,7 +40,13 @@ struct packet packetOut;
 
 #define MAX_DEVICE_ID 10
 
-
+#ifdef DEBUG_SERIAL
+#define DPRINTLN(...) Serial.println(__VA_ARGS__)
+#define DPRINT(...) Serial.print(__VA_ARGS__)
+#else
+#define DPRINTLN(...) do {} while(0)
+#define DPRINT(...) do {} while(0)
+#endif
 
 void setup() {
   Serial.begin(115200);
@@ -155,12 +161,12 @@ void loop() {
   unsigned long start_wait;
   start_wait = millis();
   while(!Serial.available()){
-      if (millis()-start_wait > 1000){
+      /*if (millis()-start_wait > 1000){
         scan();
         return;  
-      }
+      }*/
   }
-    Serial.println("Waiting for command completion");
+    DPRINTLN("Waiting for command completion");
     uint8_t ok = 1;
     packetOut.s_addr = ADDRESS;
     packetOut.d_addr = getChar();
@@ -184,12 +190,14 @@ void loop() {
     }
     
     if (ok){
-      Serial.println("Sending packet");
+      DPRINTLN("Sending packet");
       send_packet();
       if(uint8_t error = wait_for_reply(packetOut.d_addr,packetOut.command)){
         Serial.println("Error while receiving ack");
       } else {
-        Serial.println("ACK ok");  
+        Serial.print("CMD;");
+        Serial.print(packetOut.d_addr);
+        Serial.println("OK");  
       }
     }  
   
