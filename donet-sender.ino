@@ -49,7 +49,7 @@ struct packet packetOut;
 #endif
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(57600);
   radio.begin();
 
   radio.setPALevel(RF24_PA_MAX);
@@ -141,7 +141,14 @@ uint8_t send_packet(){
 
 uint8_t getChar(){
   while(!Serial.available()){}
-  return Serial.read();  
+  uint8_t ch;
+  ch = Serial.read();
+#ifdef DEBUG
+  Serial.print("'");
+  Serial.print(ch,HEX);
+  Serial.print("'");
+#endif
+  return ch;  
 }
 
 void prepareUartData(){
@@ -174,39 +181,42 @@ void loop() {
     switch(packetOut.command){
       case CMD_PWM_ONE:
         packetOut.data[0] = getChar();
+        Serial.print("CMD_ONE;");
         break;
       case CMD_PWM_THREE:
+        Serial.print("CMD_THREE;");
         packetOut.data[0] = getChar();
         packetOut.data[1] = getChar();
         packetOut.data[2] = getChar();
         break;
       case CMD_UART_SEND:
         prepareUartData();
+        Serial.print("CMD_UA_S;");
         break;
       case CMD_UART_RECV:
         packetOut.data[0] = getChar();
+        Serial.print("CMD_UA_R;");
         readUartData();
         break;
+      default:
+        Serial.print("CMD_UNK;");
+        break;
     }
+    Serial.print(packetOut.d_addr);
     
     if (ok){
       DPRINTLN("Sending packet");
       uint8_t tries;
       tries = send_packet();
       if (tries == MAX_TRIES){
-        Serial.print("CMD;");
-        Serial.print(packetOut.d_addr);
-        Serial.println(";SERR");
+        
+        Serial.println(";SERR;");
         return;
       }
       if(uint8_t error = wait_for_reply(packetOut.d_addr,packetOut.command)){
-        Serial.print("CMD;");
-        Serial.print(packetOut.d_addr);
-        Serial.println(";NACK");
+        Serial.println(";NACK;");
       } else {
-        Serial.print("CMD;");
-        Serial.print(packetOut.d_addr);
-        Serial.println(";OK");  
+        Serial.println(";OK;");  
       }
     }  
   
