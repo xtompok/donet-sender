@@ -191,13 +191,22 @@ void loop() {
     
     if (ok){
       DPRINTLN("Sending packet");
-      send_packet();
+      uint8_t tries;
+      tries = send_packet();
+      if (tries == MAX_TRIES){
+        Serial.print("CMD;");
+        Serial.print(packetOut.d_addr);
+        Serial.println(";SERR");
+        return;
+      }
       if(uint8_t error = wait_for_reply(packetOut.d_addr,packetOut.command)){
-        Serial.println("Error while receiving ack");
+        Serial.print("CMD;");
+        Serial.print(packetOut.d_addr);
+        Serial.println(";NACK");
       } else {
         Serial.print("CMD;");
         Serial.print(packetOut.d_addr);
-        Serial.println("OK");  
+        Serial.println(";OK");  
       }
     }  
   
